@@ -5,14 +5,14 @@ This plug-in will calculate and plot the Head Injury Criteria (HIC)
 described in https://en.wikipedia.org/wiki/Head_injury_criterion
 """
 
-__VERSION__ = '1.0.0'
+__VERSION__ = '1.0.1'
 
 from abaqusGui import getAFXApp
 
 toolset = getAFXApp().getAFXMainWindow().getPluginToolset()
 
 toolset.registerKernelMenuButton(
-        moduleName='halfPower',
+        moduleName='headInjuryCriteria',
         functionName='plotDamping()',
         buttonText='Head Injury Criteria HIC',
         author='Carl Osterwisch',
