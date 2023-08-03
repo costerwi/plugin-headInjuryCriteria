@@ -5,7 +5,7 @@ This plug-in will calculate and plot the Head Injury Criteria (HIC)
 described in https://en.wikipedia.org/wiki/Head_injury_criterion
 """
 
-__VERSION__ = '1.0.2'
+__VERSION__ = '1.0.3'
 
 from abaqusGui import getAFXApp
 
