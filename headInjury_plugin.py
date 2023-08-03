@@ -13,7 +13,7 @@ toolset = getAFXApp().getAFXMainWindow().getPluginToolset()
 
 toolset.registerKernelMenuButton(
         moduleName='headInjuryCriteria',
-        functionName='plotDamping()',
+        functionName='plotHIC()',
         buttonText='Head Injury Criteria HIC',
         author='Carl Osterwisch',
         description=__doc__,
