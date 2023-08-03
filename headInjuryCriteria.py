@@ -34,7 +34,7 @@ def plotHIC():
     """
 
     from abaqus import session, getWarningReply, CANCEL
-    from abaqusConstants import TIME, ACCELERATION
+    from abaqusConstants import TIME, ACCELERATION, NONE
     from visualization import QuantityType
     hicType = QuantityType(type=NONE, label='Head Injury Criteria')
     vp = session.viewports[session.currentViewportName]
