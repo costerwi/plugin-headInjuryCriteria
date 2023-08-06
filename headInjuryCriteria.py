@@ -9,17 +9,53 @@ from __future__ import print_function
 import numpy as np
 
 def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
-    integrated = np.array(zip(time, cumtrapz(y=g, x=time, initial = 0)))
+    """Calculate HIC and range of time when it occurs
 
-    maxHIC = (0, 0, 0)
-    window = np.arange(0.003, 0.037, 0.001)  # 3 to 36 ms in steps of 1 ms
-    for t1, i1 in integrated:
-        t2 = t1 + window  # array of t2 values according to window
-        i2 = np.interp(x=t2, xp=time, fp=integrated[:,1])  # array of integrated values
-        HIC = window*np.power( (i2 - i1)/window, 2.5 )  # array of HIC for t1
-        amax = np.argmax(HIC)  # index of maximum within window range
-        maxHIC = max(maxHIC, (HIC[amax], t1, t2[amax]))  # keep running maximum
+    Keyword arguments:
+    time -- list of sample times in seconds
+    g -- list of acceleration corresponding to each time in g's
+    tmax -- max size of calculation window in seconds (default 0.036)
+    tmin -- min size of calculation window in seconds (default 0.003)
 
+    >>> tmax = 0.036  # seconds
+    >>> time = np.linspace(0.0, 4.0, 10000)  # seconds
+    >>> maxg = 10  # g's
+    >>> g = maxg*np.sin(time)  # sinusoidal acceleration profile
+    >>> HIC, t1, t2 = calculate_HIC(time, g, tmax)
+
+    Calculate exact HIC for this simple acceleration profile
+    >>> integ = 2*maxg*np.cos(np.pi/2 - tmax/2)
+    >>> exactHIC = tmax*(integ/tmax)**2.5
+    >>> abs((HIC - exactHIC)/exactHIC) < 1e-6
+    True
+
+    Maximum HIC should occur near pi/2 seconds in this example
+    >>> abs((t1 + t2)/2 - np.pi/2) < 1e-3
+    True
+    >>> abs(t2 - t1 - tmax) < 1e-6
+    True
+
+    Should give same HIC for a negative acceleration
+    >>> abs(calculate_HIC(time, -1*g, tmax)[0] - HIC) < 1e-6
+    True
+    """
+
+    from scipy import integrate
+    cumintegral = integrate.cumtrapz(y=g, x=time, initial=0)
+
+    dt = np.linspace(tmin, tmax, 100)  # time steps in window
+
+    maxHIC = (0, 0, 0)  # initialize
+    for t1, i1 in zip(time, cumintegral):
+        t2 = t1 + dt  # array of t2 values
+        integ = np.interp(x=t2, xp=time, fp=cumintegral) - i1  # array of integrated values
+        for direction in 1, -1:
+            valid = integ > 0  # must be positive to apply 2.5 power
+            if np.any(valid):
+                HIC = dt[valid]*np.power(integ[valid]/dt[valid], 2.5)  # array of HIC for t1 to t2
+                amax = np.argmax(HIC)  # index of maximum within window range
+                maxHIC = max(maxHIC, (HIC[amax], t1, t2[amax]))  # running maximum
+            integ *= -1  # check opposite sign
     return maxHIC
 
 
