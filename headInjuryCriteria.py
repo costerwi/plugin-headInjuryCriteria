@@ -45,7 +45,6 @@ def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
 
     assert tmin > 0
     assert tmax > tmin
-    assert max(np.diff(time)) <= 0.2*tmin, "Time steps are too coarse"
 
     dt = np.linspace(tmin, tmax, 100)  # time steps in window
 
@@ -72,7 +71,7 @@ def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
     tmin -- always in s
     """
 
-    from abaqus import session, getWarningReply, CANCEL
+    from abaqus import session, getWarningReply, YES, NO, CANCEL
     from abaqusConstants import TIME, ACCELERATION, NONE
     from visualization import QuantityType
     hicType = QuantityType(type=NONE, label='Head Injury Criteria')
@@ -86,6 +85,7 @@ def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
     gs = 9.81/lengthUnit*timeUnit**2  # m/s**2
     print('1 g acceleration =', gs)
     chart = xyPlot.charts.values()[0]
+    reply = None
     for curve in chart.curves.values():
         if TIME != curve.data.axis1QuantityType.type:
             continue # not vs frequency
@@ -94,6 +94,13 @@ def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
         time, accel = np.asarray(curve.data.data).T
 
         time *= timeUnit # convert to seconds
+        maxdt = max(np.diff(time))
+        if reply is None and maxdt > 0.2*tmin:
+            reply = getWarningReply(
+                    'Time increment {:g} s is coarse compared to {:g} s\n'
+                    'Continue calculation?'.format(maxdt, tmin), (YES, NO))
+            if reply is NO:
+                break
 
         n = 0
         while not n or session.xyDataObjects.has_key(name): # find unique name
