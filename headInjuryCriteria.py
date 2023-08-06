@@ -8,13 +8,7 @@ Carl Osterwisch, February 2023
 from __future__ import print_function
 import numpy as np
 
-def calc_hic(xy):
-    """Calculate HIC, t1, and t2"""
-
-    from scipy.integrate import cumtrapz 
-
-    time = [t for t, y in xy]  # assume seconds
-    g = [y/9810.0 for t, y in xy]  # assume mm/s^2
+def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
     integrated = np.array(zip(time, cumtrapz(y=g, x=time, initial = 0)))
 
     maxHIC = (0, 0, 0)
@@ -44,16 +38,15 @@ def plotHIC():
                 'You must first display an XY Plot of acceleration',
                 (CANCEL, )
                 )
-    reply = None
     chart = xyPlot.charts.values()[0]
     for curve in chart.curves.values():
         if TIME != curve.data.axis1QuantityType.type:
             continue # not vs frequency
         if ACCELERATION != curve.data.axis2QuantityType.type:
             continue # not acceleration
-        data = np.asarray(curve.data.data)
+        time, accel = np.asarray(curve.data.data).T
 
-        HIC, t1, t2 = calc_hic(data)
+        HIC, t1, t2 = calculate_HIC(time, accel/9810.)
         print('HIC={}, t1={}, t2={}'.format(HIC, t1, t2))
         HICxy = [[t1, 0],
                  [t1, HIC],
