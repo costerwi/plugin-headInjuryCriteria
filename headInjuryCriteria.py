@@ -44,7 +44,7 @@ def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
     cumintegral = integrate.cumtrapz(y=g, x=time, initial=0)
 
     assert tmin > 0
-    assert tmax > tmin
+    assert tmax >= tmin
 
     dt = np.linspace(tmin, tmax, 100)  # time steps in window
 
@@ -62,13 +62,13 @@ def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
     return maxHIC
 
 
-def plotHIC(timeUnit='s', lengthUnit='mm', tmax=0.036, tmin=0.003):
+def plotHIC(timeUnit='s', lengthUnit='mm', tmax=36, tmin=3):
     """Called by Abaqus CAE to estimate critical damping in current xyPlot
 
     tiemUnit -- 's', 'ms'
     lengthUnit -- 'm', 'mm', 'in', 'ft'
-    tmax -- always in s
-    tmin -- always in s
+    tmax -- always in ms
+    tmin -- always in ms
     """
 
     from abaqus import session, getWarningReply, YES, NO, CANCEL
@@ -84,13 +84,15 @@ def plotHIC(timeUnit='s', lengthUnit='mm', tmax=0.036, tmin=0.003):
                 )
     lengthScale = {'m': 1, 'mm': 0.001, 'in': 0.0254, 'ft': 0.3048}[lengthUnit]
     timeScale = {'s': 1, 'ms': 0.001}[timeUnit]
-    gs = 9.81/lengthScale*timeScale**2  # m/s**2
-    print('1 g acceleration={:g}, tmx={:g}, tmin={:g}'.format(gs, tmax, tmin))
+    gs = 9.81/lengthScale*timeScale**2  # calculate g in user units
+    tmax *= 1e-3  # convert ms to seconds
+    tmin *= 1e-3
+    print('1 g acceleration={:g}, tmax={:g}s, tmin={:g}s'.format(gs, tmax, tmin))
     chart = xyPlot.charts.values()[0]
     reply = None
     for curve in chart.curves.values():
         if TIME != curve.data.axis1QuantityType.type:
-            continue # not vs frequency
+            continue # not vs time
         if ACCELERATION != curve.data.axis2QuantityType.type:
             continue # not acceleration
         time, accel = np.asarray(curve.data.data).T
@@ -99,7 +101,7 @@ def plotHIC(timeUnit='s', lengthUnit='mm', tmax=0.036, tmin=0.003):
         maxdt = max(np.diff(time))
         if reply is None and maxdt > 0.2*tmin:
             reply = getWarningReply(
-                    'Time increment {:g} s is coarse compared to {:g} s\n'
+                    'Time increment {:g}s is coarse compared to {:g}s\n'
                     'Continue calculation?'.format(maxdt, tmin), (YES, NO))
             if reply is NO:
                 break

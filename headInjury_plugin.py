@@ -5,7 +5,7 @@ This plug-in will calculate and plot the Head Injury Criteria (HIC)
 described in https://en.wikipedia.org/wiki/Head_injury_criterion
 """
 
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 __url__ = 'https://github.com/costerwi/plugin-headInjuryCriteria'
 
 from abaqusGui import *
@@ -30,11 +30,13 @@ class optionsDB(AFXDataDialog):
         for t in 's', 'ms':
             c.appendItem(t)
 
-        c = AFXTextField(p=group, ncols=5, labelText="Min duration time (s)",
-                tgt=owner.tminKw, opts=LAYOUT_FILL_X|AFXTEXTFIELD_FLOAT)
+        c = AFXSpinner(p=group, ncols=5, labelText="Minimum time period (ms)",
+                tgt=owner.tminKw, opts=LAYOUT_FILL_X)
+        c.setRange(1, 36)
 
-        c = AFXTextField(p=group, ncols=5, labelText="Max duration time (s)",
-                tgt=owner.tmaxKw, opts=LAYOUT_FILL_X|AFXTEXTFIELD_FLOAT)
+        c = AFXSpinner(p=group, ncols=5, labelText="Maximum time period (ms)",
+                tgt=owner.tmaxKw, opts=LAYOUT_FILL_X)
+        c.setRange(1, 36)
 
 
 class HICProcedure(AFXProcedure):
@@ -60,17 +62,17 @@ class HICProcedure(AFXProcedure):
                 isRequired=TRUE,
                 defaultValue='s')
 
-        self.tminKw = AFXFloatKeyword(
+        self.tminKw = AFXIntKeyword(
                 command=plotHIC,
                 name='tmin',
                 isRequired=TRUE,
-                defaultValue=0.003)
+                defaultValue=3)
 
-        self.tmaxKw = AFXFloatKeyword(
+        self.tmaxKw = AFXIntKeyword(
                 command=plotHIC,
                 name='tmax',
                 isRequired=TRUE,
-                defaultValue=0.036)
+                defaultValue=36)
 
         plotHIC.setKeywordValuesToDefaults()
 
