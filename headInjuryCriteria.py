@@ -43,6 +43,10 @@ def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
     from scipy import integrate
     cumintegral = integrate.cumtrapz(y=g, x=time, initial=0)
 
+    assert tmin > 0
+    assert tmax > tmin
+    assert max(np.diff(time)) <= 0.2*tmin, "Time steps are too coarse"
+
     dt = np.linspace(tmin, tmax, 100)  # time steps in window
 
     maxHIC = (0, 0, 0)  # initialize
