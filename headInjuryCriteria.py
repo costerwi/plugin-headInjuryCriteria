@@ -62,11 +62,11 @@ def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
     return maxHIC
 
 
-def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
+def plotHIC(timeUnit='s', lengthUnit='mm', tmax=0.036, tmin=0.003):
     """Called by Abaqus CAE to estimate critical damping in current xyPlot
 
-    tiemUnit -- 1 for seconds, 0.001 for ms
-    lengthUnit -- 1 for m, 0.001 for mm, 0.0254 for in, 0.3048 for ft
+    tiemUnit -- 's', 'ms'
+    lengthUnit -- 'm', 'mm', 'in', 'ft'
     tmax -- always in s
     tmin -- always in s
     """
@@ -82,8 +82,10 @@ def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
                 'You must first display an XY Plot of acceleration',
                 (CANCEL, )
                 )
-    gs = 9.81/lengthUnit*timeUnit**2  # m/s**2
-    print('1 g acceleration =', gs)
+    lengthScale = {'m': 1, 'mm': 0.001, 'in': 0.0254, 'ft': 0.3048}[lengthUnit]
+    timeScale = {'s': 1, 'ms': 0.001}[timeUnit]
+    gs = 9.81/lengthScale*timeScale**2  # m/s**2
+    print('1 g acceleration={:g}, tmx={:g}, tmin={:g}'.format(gs, tmax, tmin))
     chart = xyPlot.charts.values()[0]
     reply = None
     for curve in chart.curves.values():
@@ -93,7 +95,7 @@ def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
             continue # not acceleration
         time, accel = np.asarray(curve.data.data).T
 
-        time *= timeUnit # convert to seconds
+        time *= timeScale # convert to seconds
         maxdt = max(np.diff(time))
         if reply is None and maxdt > 0.2*tmin:
             reply = getWarningReply(
@@ -107,9 +109,9 @@ def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
             n -= 1
             name = curve.data.name + ' HIC' + str(n)
 
-        HIC, t1, t2 = calculate_HIC(time, accel/gs)
-        t1 /= timeUnit # convert to user's units
-        t2 /= timeUnit
+        HIC, t1, t2 = calculate_HIC(time, accel/gs, tmin=tmin, tmax=tmax)
+        t1 /= timeScale # convert to user's units
+        t2 /= timeScale
 
         print('{} HIC={:g}, t1={:g}, t2={:g}'.format(curve.data.legendLabel, HIC, t1, t2))
         HICxy = [[t1, 0],
