@@ -6,7 +6,7 @@ described in https://en.wikipedia.org/wiki/Head_injury_criterion
 """
 
 __version__ = '1.1.0'
-__url__ = 'https://github.com/costerwi/plugin-headInjuryCriteria',
+__url__ = 'https://github.com/costerwi/plugin-headInjuryCriteria'
 
 from abaqusGui import *
 
