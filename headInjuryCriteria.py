@@ -63,8 +63,13 @@ def calculate_HIC(time, g, tmax=0.036, tmin=0.003):
     return maxHIC
 
 
-def plotHIC():
+def plotHIC(timeUnit=1, lengthUnit=0.001, tmax=0.036, tmin=0.003):
     """Called by Abaqus CAE to estimate critical damping in current xyPlot
+
+    tiemUnit -- 1 for seconds, 0.001 for ms
+    lengthUnit -- 1 for m, 0.001 for mm, 0.0254 for in, 0.3048 for ft
+    tmax -- always in s
+    tmin -- always in s
     """
 
     from abaqus import session, getWarningReply, CANCEL
@@ -78,6 +83,8 @@ def plotHIC():
                 'You must first display an XY Plot of acceleration',
                 (CANCEL, )
                 )
+    gs = 9.81/lengthUnit*timeUnit**2  # m/s**2
+    print('1 g acceleration =', gs)
     chart = xyPlot.charts.values()[0]
     for curve in chart.curves.values():
         if TIME != curve.data.axis1QuantityType.type:
@@ -86,17 +93,22 @@ def plotHIC():
             continue # not acceleration
         time, accel = np.asarray(curve.data.data).T
 
-        HIC, t1, t2 = calculate_HIC(time, accel/9810.)
-        print('HIC={}, t1={}, t2={}'.format(HIC, t1, t2))
-        HICxy = [[t1, 0],
-                 [t1, HIC],
-                 [t2, HIC],
-                 [t2, 0]]
+        time *= timeUnit # convert to seconds
 
         n = 0
         while not n or session.xyDataObjects.has_key(name): # find unique name
             n -= 1
             name = curve.data.name + ' HIC' + str(n)
+
+        HIC, t1, t2 = calculate_HIC(time, accel/gs)
+        t1 /= timeUnit # convert to user's units
+        t2 /= timeUnit
+
+        print('{} HIC={:g}, t1={:g}, t2={:g}'.format(curve.data.legendLabel, HIC, t1, t2))
+        HICxy = [[t1, 0],
+                 [t1, HIC],
+                 [t2, HIC],
+                 [t2, 0]]
 
         curve = session.Curve(
             xyData = session.XYData(
